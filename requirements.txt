@@ -3,3 +3,6 @@ uvicorn
 torch
 torchaudio
 chatterbox-tts
+websockets
+python-multipart
+requests

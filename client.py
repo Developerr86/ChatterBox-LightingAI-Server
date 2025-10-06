@@ -1,5 +1,8 @@
 import argparse
 import requests
+import asyncio
+import subprocess
+import sys
 
 def make_api_request(api_url, text, language, reference_audio=None, output_file="output.wav"):
     """
@@ -48,11 +51,33 @@ def main():
     parser.add_argument("--lang", default="en", help="The language code (e.g., 'en', 'fr', 'es')")
     parser.add_argument("--ref_audio", help="Path to the reference .wav file for voice cloning (optional)")
     parser.add_argument("--output", default="output.wav", help="The filename for the output audio")
+    parser.add_argument("--stream", action="store_true", help="Use streaming mode for faster response")
 
     args = parser.parse_args()
 
-    # Call the function to make the API request
-    make_api_request(args.server_url, args.text, args.lang, args.ref_audio, args.output)
+    if args.stream:
+        # Use the streaming client
+        print("Using streaming mode...")
+        try:
+            # Run the streaming client as a subprocess
+            cmd = [
+                sys.executable, "streaming_client.py", args.server_url,
+                "--text", args.text,
+                "--lang", args.lang,
+                "--output", args.output
+            ]
+            
+            if args.ref_audio:
+                cmd.extend(["--ref_audio", args.ref_audio])
+            
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Streaming client failed: {e}")
+        except FileNotFoundError:
+            print("streaming_client.py not found. Make sure it's in the same directory.")
+    else:
+        # Use the regular API request
+        make_api_request(args.server_url, args.text, args.lang, args.ref_audio, args.output)
 
 if __name__ == "__main__":
     main()
